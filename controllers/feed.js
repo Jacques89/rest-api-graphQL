@@ -168,7 +168,6 @@ exports.updatePost = async(req, res, next) => {
 
 exports.deletePost = async(req, res, next) => {
   const postId = req.params.postId
-  
   try {
     const post = await Post.findById(postId)
     if (!post) {
@@ -182,12 +181,15 @@ exports.deletePost = async(req, res, next) => {
       throw error
     }
     clearImage(post.imageUrl)
-
     await Post.findByIdAndRemove(postId)
+    
     const user = await User.findById(req.userId)
     user.posts.pull(postId)
-
     await user.save()
+    io.getIO().emit('posts', {
+      action: 'delete',
+      post: postId
+    })
     res.status(200).json({
       message: 'Post Deleted!'
     })
