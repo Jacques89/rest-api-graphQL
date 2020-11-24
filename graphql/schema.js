@@ -32,7 +32,7 @@ module.exports = buildSchema(`
   }
 
   type RootQuery {
-    login(email: String!, passwrd: String!) : AuthData!
+    login(email: String!, password: String!) : AuthData!
   }
 
   type RootMutation {
