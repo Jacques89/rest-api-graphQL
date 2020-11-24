@@ -54,7 +54,8 @@ app.use(
   '/graphql', 
   graphqlHTTP({
     schema: graphqlSchema,
-    rootValue: graphqlResolver
+    rootValue: graphqlResolver,
+    graphiql: true
   }
 ))
 
