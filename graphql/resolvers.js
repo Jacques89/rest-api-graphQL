@@ -3,6 +3,7 @@ const validator = require('validator')
 const jwt = require('jsonwebtoken')
 
 const User = require('../models/user')
+const Post = require('../models/post')
 
 module.exports = {
   createUser: async function({ userInput }, req) {
@@ -58,5 +59,51 @@ module.exports = {
       { expiresIn: '1h' }
     )
     return { token: token, userId: user._id.toString() }
+  },
+  createPost: async function({ postInput }, req) {
+    if (!req.isAuth) {
+      const error = new Error('Sorry, you are not authenticated')
+      error.code = 401
+      throw error
+    }
+    const errors = []
+    if (
+      validator.isEmpty(postInput.title) || 
+      !validator.isLength(postInput.title, { min: 5 })
+    ) {
+      errors.push({ message: 'Invalid title' })
+    }
+    if (
+      validator.isEmpty(postInput.content) || 
+      !validator.isLength(postInput.content, { min: 5 })
+    ) {
+      errors.push({ message: 'Invalid content' })
+    }
+    if (errors.length > 0) {
+      const error = new Error('Invalid input.')
+      error.data = errors
+      error.code = 422
+      throw error
+    }
+    const user = await User.findById(req.userId)
+    if (!user) {
+      const error = new Error('Invalid user.')
+      error.code = 401
+      throw error
+    }
+    const post = new Post({
+      title: postInput.title,
+      content: postInput.content,
+      imageUrl: postInput.imageUrl,
+      creator: user
+    })
+    const createdPost = await post.save()
+    user.posts.push(createdPost)
+    return {
+      ...createdPost._doc,
+      _id: createdPost._id.toString(),
+      createdAt: createdPost.createdAt.toISOString(),
+      updatedAt: createdPost.updatedAt.toISOString()
+    }
   }
 }
